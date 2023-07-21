@@ -1,0 +1,39 @@
+name: build docker image
+on:
+  push:
+    branches: [main]    
+
+
+jobs:
+  build_image:
+    name: build_image
+    runs-on: ubuntu-latest
+
+
+    steps:
+      - name: check out the repo
+        uses: actions/checkout@v3 
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: build and push docker image
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: cpendley13/webapp:v3
+
+      - name: update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name eks-clusterssz2 --region us-east-2
+          kubectl apply -f manifest.yaml
+          kubectl get po
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_REGION: 'us-east-2'
+
+      
